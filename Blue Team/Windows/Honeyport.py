@@ -8,12 +8,36 @@
 
 import socket
 
-port = 445
+# Config
+friendly_server = '192.168.3.120'
+bait_port = 445
+friendly_port = 5860
 friendlies = ['192.168.3.163', '192.168.2.1']
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.bind(('', port))
-sock.listen(1)
-conn, addr = sock.accept()
-print ('Connected by ', addr)
-option = raw_input("Do you want to blacklist this address? ")
+def collect():
+    '''
+    Listens for hostile connections
+    '''
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(('', bait_port))
+    sock.listen(1)
+    conn, addr = sock.accept()
+    print ('Connected by ', addr)
+    conn.close()
+    report(addr)
+
+
+def report(att_ip):
+    '''
+    Sends potentially malicious IP to server
+    '''
+    # Ignore friendly addresses (vulnerability scans, etc.)
+    if att_ip in friendlies:
+        return collect()
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((friendly_server, friendly_port))
+    sock.sendall(att_ip)
+    return collect()
+
+    
